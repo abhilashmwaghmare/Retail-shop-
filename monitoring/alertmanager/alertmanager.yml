@@ -1,0 +1,22 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 1h
+  receiver: 'sre-team-webhook'
+
+receivers:
+  - name: 'sre-team-webhook'
+    webhook_configs:
+      - url: 'http://notification-service:5006/notifications/send'
+        send_resolved: true
+
+inhibit_rules:
+  - source_match:
+      alertname: 'DatabaseDown'
+    target_match:
+      severity: 'warning'
+    equal: ['instance']

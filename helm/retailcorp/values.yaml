@@ -1,0 +1,137 @@
+# ==============================================================================
+# RetailCorp Enterprise 7-Microservices Helm Values
+# ==============================================================================
+
+global:
+  environment: production
+  domain: retailcorp.internal
+  imageRegistry: ecr.ap-southeast-2.amazonaws.com/retailcorp
+
+# Ingress Configuration (Ingress-Nginx with TLS)
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+  hosts:
+    - host: retailcorp.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api-gateway
+          port: 8000
+  tls:
+    - secretName: retailcorp-tls-cert
+      hosts:
+        - retailcorp.example.com
+
+# Core API Gateway (Ingress Proxy & Circuit Breaker)
+apiGateway:
+  replicaCount: 3
+  image:
+    repository: retailcorp-api-gateway
+    tag: "2.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# 6 Decoupled Backend Microservices
+microservices:
+  authService:
+    port: 5001
+    replicaCount: 2
+    resources:
+      requests: { cpu: 50m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 256Mi }
+  productService:
+    port: 5002
+    replicaCount: 3
+    resources:
+      requests: { cpu: 100m, memory: 128Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+  cartService:
+    port: 5003
+    replicaCount: 2
+    resources:
+      requests: { cpu: 50m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 256Mi }
+  orderService:
+    port: 5004
+    replicaCount: 2
+    resources:
+      requests: { cpu: 100m, memory: 128Mi }
+      limits: { cpu: 300m, memory: 512Mi }
+  paymentService:
+    port: 5005
+    replicaCount: 2
+    resources:
+      requests: { cpu: 100m, memory: 128Mi }
+      limits: { cpu: 300m, memory: 512Mi }
+  notificationService:
+    port: 5006
+    replicaCount: 2
+    resources:
+      requests: { cpu: 50m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 256Mi }
+
+# Message Broker (RabbitMQ AMQP + Management)
+rabbitmq:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: rabbitmq
+    tag: 3.13-management-alpine
+  ports:
+    amqp: 5672
+    management: 15672
+  persistence:
+    enabled: true
+    size: 10Gi
+  resources:
+    requests: { cpu: 200m, memory: 256Mi }
+    limits: { cpu: 1000m, memory: 1Gi }
+
+# In-Memory Cache (Redis 7)
+redis:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: redis
+    tag: 7-alpine
+  port: 6379
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: 200m, memory: 256Mi }
+
+# Relational Database (PostgreSQL 15)
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: 15-alpine
+  database: ecommerce_db
+  username: app_user
+  existingSecret: postgres-credentials
+  persistence:
+    enabled: true
+    size: 20Gi
+  resources:
+    requests: { cpu: 200m, memory: 256Mi }
+    limits: { cpu: 1000m, memory: 1Gi }

@@ -1,0 +1,259 @@
+version: '3.8'
+
+services:
+  # =============================================================
+  # 1. DATABASE & CACHE TIER
+  # =============================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: retailcorp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ecommerce_db
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: SecureRetailCorp2026!DBPass
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d ecommerce_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: retailcorp-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: retailcorp-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - backend-net
+
+  # =============================================================
+  # 2. MICROSERVICES MESH (7 Decoupled Services)
+  # =============================================================
+  auth-service:
+    build: { context: ./microservices/auth-service }
+    container_name: retailcorp-auth-service
+    restart: unless-stopped
+    environment:
+      PORT: 5001
+      NODE_ENV: production
+      DATABASE_URL: postgres://app_user:SecureRetailCorp2026!DBPass@postgres:5432/ecommerce_db
+    depends_on:
+      - postgres
+    networks:
+      - backend-net
+
+  product-service:
+    build: { context: ./microservices/product-service }
+    container_name: retailcorp-product-service
+    restart: unless-stopped
+    environment:
+      PORT: 5002
+      NODE_ENV: production
+      DATABASE_URL: postgres://app_user:SecureRetailCorp2026!DBPass@postgres:5432/ecommerce_db
+    depends_on:
+      - postgres
+    networks:
+      - backend-net
+
+  cart-service:
+    build: { context: ./microservices/cart-service }
+    container_name: retailcorp-cart-service
+    restart: unless-stopped
+    environment:
+      PORT: 5003
+      NODE_ENV: production
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - redis
+    networks:
+      - backend-net
+
+  order-service:
+    build: { context: ./microservices/order-service }
+    container_name: retailcorp-order-service
+    restart: unless-stopped
+    environment:
+      PORT: 5004
+      NODE_ENV: production
+      DATABASE_URL: postgres://app_user:SecureRetailCorp2026!DBPass@postgres:5432/ecommerce_db
+      PAYMENT_SERVICE_URL: http://payment-service:5005
+      NOTIFICATION_SERVICE_URL: http://notification-service:5006
+    depends_on:
+      - postgres
+    networks:
+      - backend-net
+
+  payment-service:
+    build: { context: ./microservices/payment-service }
+    container_name: retailcorp-payment-service
+    restart: unless-stopped
+    environment:
+      PORT: 5005
+      NODE_ENV: production
+    networks:
+      - backend-net
+
+  notification-service:
+    build: { context: ./microservices/notification-service }
+    container_name: retailcorp-notification-service
+    restart: unless-stopped
+    environment:
+      PORT: 5006
+      NODE_ENV: production
+    networks:
+      - backend-net
+
+  api-gateway:
+    build: { context: ./microservices/api-gateway }
+    container_name: retailcorp-api-gateway
+    restart: unless-stopped
+    environment:
+      PORT: 8000
+      NODE_ENV: production
+      AUTH_SERVICE_URL: http://auth-service:5001
+      PRODUCT_SERVICE_URL: http://product-service:5002
+      CART_SERVICE_URL: http://cart-service:5003
+      ORDER_SERVICE_URL: http://order-service:5004
+      PAYMENT_SERVICE_URL: http://payment-service:5005
+      NOTIFICATION_SERVICE_URL: http://notification-service:5006
+    depends_on:
+      - postgres
+      - auth-service
+      - product-service
+      - cart-service
+      - order-service
+      - payment-service
+      - notification-service
+    networks:
+      - frontend-net
+      - backend-net
+
+  # =============================================================
+  # 3. INGRESS & STOREFRONT TIER
+  # =============================================================
+  frontend:
+    image: nginx:alpine
+    container_name: retailcorp-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/index.html:/usr/share/nginx/html/index.html:ro
+      - ./nginx/conf.d/app.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api-gateway
+    networks:
+      - frontend-net
+      - backend-net
+
+  # =============================================================
+  # 4. OBSERVABILITY & SRE MONITORING TIER
+  # =============================================================
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: retailcorp-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.external-url=http://52.63.189.76/prometheus/'
+      - '--web.route-prefix=/prometheus/'
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
+    networks:
+      - backend-net
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: retailcorp-alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://52.63.189.76/alertmanager/'
+      - '--web.route-prefix=/alertmanager/'
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    networks:
+      - backend-net
+
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: retailcorp-node-exporter
+    restart: unless-stopped
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    ports:
+      - "9100:9100"
+    networks:
+      - backend-net
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: retailcorp-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=RetailCorpAdmin2026!
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s:%(http_port)s/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - backend-net
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge

@@ -1,0 +1,47 @@
+groups:
+  - name: ecommerce_microservices_alerts
+    rules:
+      - alert: MicroserviceDown
+        expr: up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Microservice instance {{ $labels.instance }} is DOWN"
+          description: "Target {{ $labels.job }} has been unreachable for > 30 seconds."
+
+      - alert: DatabaseDown
+        expr: database_connection_up == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL Database Connection Lost"
+          description: "Microservices cannot reach PostgreSQL database engine."
+
+      - alert: HighErrorRate5xx
+        expr: rate(http_requests_total{status=~"5.."}[2m]) > 0.05
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 5xx Error Rate detected on {{ $labels.job }}"
+          description: "5xx error rate exceeds 5% of total traffic."
+
+      - alert: HostHighCpuLoad
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host CPU utilization > 80%"
+          description: "EC2 instance CPU usage is critical."
+
+      - alert: HostHighMemoryLoad
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host Memory utilization > 85%"
+          description: "EC2 instance RAM is approaching exhaustion."

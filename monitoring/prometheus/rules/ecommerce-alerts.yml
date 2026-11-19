@@ -1,0 +1,108 @@
+# =============================================================================
+# Production Alerting Rules for Prometheus
+# Aligned with Google SRE 4 Golden Signals and Host Infrastructure Telemetry
+# =============================================================================
+
+groups:
+  - name: ecommerce_infrastructure_alerts
+    rules:
+      # -----------------------------------------------------------------------
+      # Alert 1: Application Service Downtime
+      # -----------------------------------------------------------------------
+      - alert: ApplicationDowntime
+        expr: up{job="ecommerce-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: ecommerce-backend
+        annotations:
+          summary: "Application service instance is down"
+          description: "Prometheus failed to scrape ecommerce-backend for more than 1 minute. Service is unresponsive."
+          runbook_url: "https://wiki.retailcorp.io/runbooks/service-outage"
+
+      # -----------------------------------------------------------------------
+      # Alert 2: High Host CPU Utilization (> 80%)
+      # -----------------------------------------------------------------------
+      - alert: HighCpuUtilization
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[3m])) * 100) > 80
+        for: 3m
+        labels:
+          severity: warning
+          service: host-system
+        annotations:
+          summary: "Host CPU utilization exceeded 80%"
+          description: "CPU usage on {{ $labels.instance }} has been sustained above 80% for more than 3 minutes (Current: {{ $value | printf \"%.2f\" }}%)."
+          runbook_url: "https://wiki.retailcorp.io/runbooks/high-cpu"
+
+      # -----------------------------------------------------------------------
+      # Alert 3: High Host Memory Utilization (> 85%)
+      # -----------------------------------------------------------------------
+      - alert: HighMemoryUtilization
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 3m
+        labels:
+          severity: warning
+          service: host-system
+        annotations:
+          summary: "Host Memory saturation exceeded 85%"
+          description: "Available memory on {{ $labels.instance }} is below 15% (Current usage: {{ $value | printf \"%.2f\" }}%). Risk of OOM killer termination."
+          runbook_url: "https://wiki.retailcorp.io/runbooks/memory-saturation"
+
+      # -----------------------------------------------------------------------
+      # Alert 4: Host Disk Space Exhaustion (< 15% Free)
+      # -----------------------------------------------------------------------
+      - alert: DiskSpaceExhaustion
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: critical
+          service: host-system
+        annotations:
+          summary: "Root filesystem free space below 15%"
+          description: "Root partition on {{ $labels.instance }} has less than 15% disk space remaining (Current: {{ $value | printf \"%.2f\" }}%)."
+          runbook_url: "https://wiki.retailcorp.io/runbooks/disk-cleanup"
+
+      # -----------------------------------------------------------------------
+      # Alert 5: Failed Database Health Checks (Readiness Failure)
+      # -----------------------------------------------------------------------
+      - alert: DatabaseHealthCheckFailed
+        expr: ecommerce_db_healthy == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: postgresql-database
+        annotations:
+          summary: "Backend database health probe failing"
+          description: "Backend API probe /ready cannot connect to PostgreSQL. Latency or network partition detected."
+          runbook_url: "https://wiki.retailcorp.io/runbooks/db-connectivity"
+
+      # -----------------------------------------------------------------------
+      # Alert 6: High HTTP 5xx Error Rate (> 5% of traffic)
+      # -----------------------------------------------------------------------
+      - alert: HighHttpErrorRate
+        expr: |
+          (
+            sum(rate(ecommerce_http_requests_total{status_code=~"5.."}[2m]))
+            /
+            (sum(rate(ecommerce_http_requests_total[2m])) > 0)
+          ) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: ecommerce-backend
+        annotations:
+          summary: "High HTTP 5xx Error Rate (>5%)"
+          description: "Over 5% of client requests are failing with 5xx status codes for 2 consecutive minutes."
+
+      # -----------------------------------------------------------------------
+      # Alert 7: High Request Latency (p99 > 500ms)
+      # -----------------------------------------------------------------------
+      - alert: HighRequestLatencyP99
+        expr: histogram_quantile(0.99, sum(rate(ecommerce_http_request_duration_seconds_bucket[3m])) by (le)) > 0.5
+        for: 3m
+        labels:
+          severity: warning
+          service: ecommerce-backend
+        annotations:
+          summary: "Backend p99 latency exceeded 500ms SLA threshold"
+          description: "99th percentile response latency is currently {{ $value | printf \"%.3f\" }}s over a 3-minute window."

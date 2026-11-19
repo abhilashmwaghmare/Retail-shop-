@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ApexCloud Commerce | Enterprise DevOps Microservices Platform</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .glass-panel { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(51, 65, 85, 0.5); }
+    .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.4); }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.6); border-radius: 9999px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- ============================================================================== -->
+  <!-- 1. LIVE MICROSERVICES TOPOLOGY & TELEMETRY BAR -->
+  <!-- ============================================================================== -->
+  <div class="bg-slate-900/90 border-b border-slate-800 px-4 lg:px-8 py-2 sticky top-0 z-50 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between text-xs gap-2 font-mono">
+      <div class="flex items-center space-x-3">
+        <span class="flex items-center text-emerald-400 font-semibold">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping mr-2"></span>
+          MESH: 7 SERVICES ACTIVE
+        </span>
+        <span class="text-slate-500 hidden md:inline">|</span>
+        <span class="text-slate-400 hidden md:inline"><i class="fa-brands fa-aws text-amber-400 mr-1"></i> AWS EC2: c7i-flex.large</span>
+        <span class="text-slate-500 hidden lg:inline">|</span>
+        <span class="text-slate-400 hidden lg:inline"><i class="fa-solid fa-location-dot text-rose-400 mr-1"></i> ap-southeast-2b</span>
+      </div>
+
+      <!-- Live Microservices Latency Badges -->
+      <div id="mesh-badges" class="flex items-center space-x-2 overflow-x-auto py-1">
+        <span class="px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/60 flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 mr-1.5"></span>Gateway: <span id="lat-gateway" class="ml-1 text-white">1ms</span>
+        </span>
+        <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>Auth: <span id="lat-auth" class="ml-1 text-emerald-300">3ms</span>
+        </span>
+        <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>Catalog: <span id="lat-product" class="ml-1 text-emerald-300">4ms</span>
+        </span>
+        <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>Cart: <span id="lat-cart" class="ml-1 text-emerald-300">2ms</span>
+        </span>
+        <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>Order: <span id="lat-order" class="ml-1 text-emerald-300">5ms</span>
+        </span>
+        <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>Payment: <span id="lat-payment" class="ml-1 text-emerald-300">4ms</span>
+        </span>
+        <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>Notify: <span id="lat-notification" class="ml-1 text-emerald-300">2ms</span>
+        </span>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <span id="circuit-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>CIRCUIT: CLOSED
+        </span>
+        <a href="/metrics" target="_blank" class="text-indigo-400 hover:text-indigo-300 flex items-center font-medium"><i class="fa-solid fa-chart-line mr-1"></i> METRICS</a>
+        <a href="/rabbitmq/" target="_blank" class="text-amber-400 hover:text-amber-300 flex items-center font-medium"><i class="fa-solid fa-network-wired mr-1"></i> RABBITMQ</a>
+        <a href="/prometheus/" target="_blank" class="text-sky-400 hover:text-sky-300 flex items-center font-medium"><i class="fa-solid fa-fire-flame-curved mr-1"></i> PROMETHEUS</a>
+        <a href="/alertmanager/" target="_blank" class="text-rose-400 hover:text-rose-300 flex items-center font-medium"><i class="fa-solid fa-bell mr-1"></i> ALERTS</a>
+        <a href="/grafana/" target="_blank" class="text-purple-400 hover:text-purple-300 flex items-center font-medium"><i class="fa-solid fa-gauge-high mr-1"></i> GRAFANA</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================================== -->
+  <!-- 2. MAIN NAVIGATION BAR -->
+  <!-- ============================================================================== -->
+  <nav class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-[37px] z-40">
+    <div class="max-w-7xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
+      <!-- Brand Logo -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <i class="fa-solid fa-cubes text-white text-lg"></i>
+        </div>
+        <div>
+          <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-indigo-300 bg-clip-text text-transparent">ApexCloud</span>
+          <span class="text-xs px-2 py-0.5 ml-1.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">Microservices v2.0</span>
+        </div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="hidden md:flex flex-1 max-w-md mx-8 relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+        <input id="search-input" type="text" placeholder="Search developer gear, cloud books, hardware..." 
+          class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition">
+      </div>
+
+      <!-- Right Action Controls -->
+      <div class="flex items-center space-x-4">
+        <!-- Order History Trigger -->
+        <button onclick="toggleOrdersModal()" class="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-sm font-medium text-slate-300 hover:text-white transition flex items-center">
+          <i class="fa-solid fa-receipt mr-2 text-indigo-400"></i> Orders
+        </button>
+
+        <!-- SRE / Admin Control Panel -->
+        <button onclick="toggleAdminPanel()" class="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/40 text-sm font-medium text-indigo-400 hover:text-indigo-300 transition flex items-center">
+          <i class="fa-solid fa-bolt mr-2 text-amber-400"></i> SRE Controls
+        </button>
+
+        <!-- Shopping Cart Trigger -->
+        <button onclick="toggleCartDrawer()" class="relative px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition flex items-center">
+          <i class="fa-solid fa-cart-shopping mr-2"></i> Cart
+          <span id="cart-badge" class="ml-2 w-5 h-5 rounded-full bg-white text-indigo-700 text-xs font-bold flex items-center justify-center">0</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================================================== -->
+  <!-- 3. HERO SHOWCASE & CLOUD ARCHITECTURE METRICS -->
+  <!-- ============================================================================== -->
+  <section class="relative overflow-hidden pt-8 pb-12 border-b border-slate-800/60 bg-gradient-to-b from-indigo-950/20 via-slate-950 to-slate-950">
+    <div class="max-w-7xl mx-auto px-4 lg:px-8">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div class="max-w-2xl">
+          <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-4">
+            <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+            <span>ENTERPRISE DISTRIBUTED SYSTEMS ARCHITECTURE</span>
+          </div>
+          <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+            High-Performance Gear for <span class="bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">Cloud Engineers</span>
+          </h1>
+          <p class="mt-4 text-base sm:text-lg text-slate-400 leading-relaxed">
+            Architected across 7 decoupled microservices with Docker Compose orchestration, Prometheus telemetry, zero-downtime rolling deploys, and automated SRE failover recovery.
+          </p>
+
+          <!-- System Badges -->
+          <div class="mt-6 flex flex-wrap gap-2 text-xs font-mono">
+            <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center"><i class="fa-solid fa-network-wired text-indigo-400 mr-1.5"></i> 7 Decoupled Microservices</span>
+            <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center"><i class="fa-brands fa-docker text-cyan-400 mr-1.5"></i> Multi-Stage Non-Root Containers</span>
+            <span class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 flex items-center"><i class="fa-solid fa-shield-halved text-emerald-400 mr-1.5"></i> JWT & Least-Privilege Security</span>
+          </div>
+        </div>
+
+        <!-- Live Architecture Stats Card -->
+        <div class="w-full lg:w-96 glass-card rounded-2xl p-6 border border-slate-800 shadow-2xl">
+          <div class="flex items-center justify-between border-b border-slate-700/60 pb-3 mb-4">
+            <span class="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">Mesh Health Monitor</span>
+            <span id="mesh-overall-status" class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">100% HEALTHY</span>
+          </div>
+
+          <div class="space-y-3 font-mono text-xs">
+            <div class="flex justify-between items-center text-slate-300">
+              <span class="flex items-center"><i class="fa-solid fa-server mr-2 text-indigo-400"></i> Active Containers:</span>
+              <span class="font-bold text-white">9 Containers</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-300">
+              <span class="flex items-center"><i class="fa-solid fa-bolt mr-2 text-amber-400"></i> Avg Microservice Latency:</span>
+              <span id="avg-latency" class="font-bold text-emerald-400">< 4 ms</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-300">
+              <span class="flex items-center"><i class="fa-solid fa-database mr-2 text-cyan-400"></i> PostgreSQL 15 Engine:</span>
+              <span class="font-bold text-emerald-400">Connected</span>
+            </div>
+            <div class="flex justify-between items-center text-slate-300">
+              <span class="flex items-center"><i class="fa-solid fa-clock-rotate-left mr-2 text-rose-400"></i> Target MTTR:</span>
+              <span class="font-bold text-white">< 60s (Auto-Rollback)</span>
+            </div>
+          </div>
+
+          <div class="mt-5 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs">
+            <span class="text-slate-400">Probe endpoints:</span>
+            <div class="space-x-1.5">
+              <a href="/healthz" target="_blank" class="text-indigo-400 hover:underline font-mono">/healthz</a>
+              <a href="/ready" target="_blank" class="text-indigo-400 hover:underline font-mono">/ready</a>
+              <a href="/api/mesh/health" target="_blank" class="text-cyan-400 hover:underline font-mono">/mesh</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================================== -->
+  <!-- 4. PRODUCT CATALOG WITH CATEGORIES & SEARCH -->
+  <!-- ============================================================================== -->
+  <main class="max-w-7xl mx-auto px-4 lg:px-8 py-10 flex-1 w-full">
+    <!-- Category Tabs -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+      <div id="category-tabs" class="flex flex-wrap gap-2">
+        <button onclick="setCategory('All')" class="cat-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" data-cat="All">All Items</button>
+        <button onclick="setCategory('Hardware')" class="cat-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800" data-cat="Hardware">Hardware</button>
+        <button onclick="setCategory('Books')" class="cat-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800" data-cat="Books">Cloud Books</button>
+        <button onclick="setCategory('Audio')" class="cat-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800" data-cat="Audio">Audio</button>
+        <button onclick="setCategory('Apparel')" class="cat-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800" data-cat="Apparel">Apparel</button>
+        <button onclick="setCategory('Furniture')" class="cat-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800" data-cat="Furniture">Furniture</button>
+      </div>
+
+      <div class="text-sm text-slate-400 font-mono">
+        Showing <span id="item-count" class="text-white font-bold">8</span> items
+      </div>
+    </div>
+
+    <!-- Product Grid -->
+    <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <!-- Loading Skeleton -->
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 animate-pulse h-96"></div>
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 animate-pulse h-96"></div>
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 animate-pulse h-96"></div>
+      <div class="glass-card rounded-2xl p-6 border border-slate-800 animate-pulse h-96"></div>
+    </div>
+  </main>
+
+  <!-- ============================================================================== -->
+  <!-- 5. SLIDE-OVER SHOPPING CART DRAWER -->
+  <!-- ============================================================================== -->
+  <div id="cart-drawer-backdrop" onclick="toggleCartDrawer()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 transition-opacity opacity-0 pointer-events-none duration-300"></div>
+  <aside id="cart-drawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-slate-900 border-l border-slate-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+    <!-- Header -->
+    <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <i class="fa-solid fa-cart-shopping text-indigo-400 text-lg"></i>
+        <h2 class="text-lg font-bold text-white">Your Shopping Cart</h2>
+        <span id="cart-items-counter" class="text-xs font-mono px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800/60">0</span>
+      </div>
+      <button onclick="toggleCartDrawer()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- Free Shipping Progress -->
+    <div class="px-6 py-3 bg-slate-950/60 border-b border-slate-800/80">
+      <div class="flex justify-between text-xs font-mono mb-1.5">
+        <span id="shipping-prompt" class="text-indigo-300">Add items to qualify for FREE Shipping</span>
+        <span class="text-slate-400 font-bold">$100.00</span>
+      </div>
+      <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+        <div id="shipping-progress" class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Cart Item List -->
+    <div id="cart-items-container" class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+      <div class="text-center py-16 text-slate-500">
+        <i class="fa-solid fa-basket-shopping text-4xl mb-3"></i>
+        <p class="text-sm">Your cart is currently empty.</p>
+      </div>
+    </div>
+
+    <!-- Cart Footer & Checkout Action -->
+    <div class="p-6 border-t border-slate-800 bg-slate-950/80 space-y-3 font-mono text-sm">
+      <div class="flex justify-between text-slate-400">
+        <span>Subtotal:</span>
+        <span id="cart-subtotal" class="text-white font-bold">$0.00</span>
+      </div>
+      <div class="flex justify-between text-slate-400">
+        <span>Estimated Tax (8%):</span>
+        <span id="cart-tax" class="text-white font-bold">$0.00</span>
+      </div>
+      <div class="flex justify-between text-slate-400">
+        <span>Shipping:</span>
+        <span id="cart-shipping" class="text-emerald-400 font-bold">FREE</span>
+      </div>
+      <div class="pt-2 border-t border-slate-800 flex justify-between text-base font-bold">
+        <span class="text-white">Order Total:</span>
+        <span id="cart-total" class="text-emerald-400 text-lg">$0.00</span>
+      </div>
+
+      <button id="checkout-btn" onclick="openCheckoutModal()" disabled class="w-full mt-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-bold text-sm shadow-xl shadow-indigo-600/30 transition flex items-center justify-center">
+        <i class="fa-solid fa-lock mr-2"></i> Proceed to Checkout
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============================================================================== -->
+  <!-- 6. MULTI-STEP CHECKOUT MODAL (Calls Order & Payment Microservices) -->
+  <!-- ============================================================================== -->
+  <div id="checkout-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative">
+      <button onclick="closeCheckoutModal()" class="absolute top-6 right-6 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Secure Checkout</h3>
+          <p class="text-xs text-slate-400 font-mono">Microservices Mesh Orchestration</p>
+        </div>
+      </div>
+
+      <form id="checkout-form" onsubmit="handleCheckout(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Customer Full Name</label>
+          <input type="text" id="chk-name" required value="Alex Rivera (SRE Lead)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Email Address (For Notification Service)</label>
+          <input type="email" id="chk-email" required value="devops@retailcorp.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Shipping Address</label>
+          <input type="text" id="chk-address" required value="42 Cloud Architecture Way, Sydney NSW 2000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Payment Card (Simulated Stripe Gateway)</label>
+          <div class="relative">
+            <input type="text" id="chk-card" required value="4242 •••• •••• 4242" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-2.5 text-sm text-slate-200 font-mono focus:outline-none focus:border-indigo-500 transition">
+            <i class="fa-brands fa-cc-visa absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+          </div>
+        </div>
+
+        <div class="p-4 bg-slate-950/80 rounded-xl border border-slate-800 text-xs font-mono space-y-1">
+          <div class="flex justify-between text-slate-400"><span>Items Total:</span><span id="chk-total" class="text-white font-bold">$0.00</span></div>
+          <div class="flex justify-between text-slate-400"><span>Target:</span><span class="text-indigo-400">order-service:5004 ➔ payment-service:5005</span></div>
+        </div>
+
+        <button type="submit" id="submit-order-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 transition flex items-center justify-center">
+          <i class="fa-solid fa-check-circle mr-2"></i> Confirm Order & Pay Now
+        </button>
+      </form>
+
+      <!-- Processing State Overlay -->
+      <div id="checkout-progress" class="hidden absolute inset-0 bg-slate-900/95 rounded-3xl p-8 flex flex-col items-center justify-center text-center">
+        <div class="w-14 h-14 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin mb-4"></div>
+        <h4 id="progress-title" class="text-lg font-bold text-white mb-2">Orchestrating Order Across Mesh...</h4>
+        <div id="progress-steps" class="space-y-2 text-xs font-mono text-slate-400 text-left w-full max-w-xs">
+          <div id="step-1" class="flex items-center"><i class="fa-solid fa-spinner animate-spin mr-2 text-indigo-400"></i> Validating Cart & Stock with Inventory...</div>
+          <div id="step-2" class="flex items-center text-slate-600"><i class="fa-solid fa-circle-dot mr-2"></i> Authorizing Payment via Payment Gateway...</div>
+          <div id="step-3" class="flex items-center text-slate-600"><i class="fa-solid fa-circle-dot mr-2"></i> Dispatching Notification via Email Service...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================================== -->
+  <!-- 7. LIVE ORDERS HISTORY MODAL -->
+  <!-- ============================================================================== -->
+  <div id="orders-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[85vh] flex flex-col">
+      <button onclick="toggleOrdersModal()" class="absolute top-6 right-6 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-receipt"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Live Orders Database</h3>
+          <p class="text-xs text-slate-400 font-mono">Streamed from Order Microservice (Port 5004)</p>
+        </div>
+      </div>
+
+      <div id="orders-list-container" class="flex-1 overflow-y-auto space-y-4 custom-scrollbar pr-2">
+        <div class="text-center py-12 text-slate-500">Loading orders...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================================== -->
+  <!-- 8. SRE & CHAOS ENGINEERING CONTROL DRAWER -->
+  <!-- ============================================================================== -->
+  <div id="admin-panel" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative">
+      <button onclick="toggleAdminPanel()" class="absolute top-6 right-6 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">SRE & Chaos Engineering Panel</h3>
+          <p class="text-xs text-slate-400 font-mono">Simulate Incidents & Test Resilience</p>
+        </div>
+      </div>
+
+      <div class="space-y-4 text-sm">
+        <!-- Chaos Injection 1: Payment Failure -->
+        <div class="p-5 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between">
+          <div>
+            <h4 class="font-bold text-white flex items-center"><i class="fa-solid fa-bug text-rose-400 mr-2"></i> Payment Gateway Chaos (500 Error)</h4>
+            <p class="text-xs text-slate-400 mt-1">Injects simulated timeout & 500 error into payment-service to test failure handling.</p>
+          </div>
+          <button id="chaos-btn" onclick="togglePaymentChaos()" class="px-4 py-2 rounded-xl text-xs font-mono font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+            OFF
+          </button>
+        </div>
+
+        <!-- Observability & Messaging Quick Links -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2">
+          <a href="/rabbitmq/" target="_blank" class="p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/40 text-center transition">
+            <i class="fa-solid fa-network-wired text-amber-400 text-lg mb-1"></i>
+            <span class="block text-xs font-bold text-white">RabbitMQ</span>
+            <span class="text-[10px] text-slate-500 font-mono">/rabbitmq/</span>
+          </a>
+          <a href="/grafana/" target="_blank" class="p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-purple-500/40 text-center transition">
+            <i class="fa-solid fa-chart-pie text-purple-400 text-lg mb-1"></i>
+            <span class="block text-xs font-bold text-white">Grafana</span>
+            <span class="text-[10px] text-slate-500 font-mono">/grafana/</span>
+          </a>
+          <a href="/prometheus/" target="_blank" class="p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-sky-500/40 text-center transition">
+            <i class="fa-solid fa-fire text-sky-400 text-lg mb-1"></i>
+            <span class="block text-xs font-bold text-white">Prometheus</span>
+            <span class="text-[10px] text-slate-500 font-mono">/prometheus/</span>
+          </a>
+          <a href="/alertmanager/" target="_blank" class="p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-rose-500/40 text-center transition">
+            <i class="fa-solid fa-bell text-rose-400 text-lg mb-1"></i>
+            <span class="block text-xs font-bold text-white">Alertmanager</span>
+            <span class="text-[10px] text-slate-500 font-mono">/alertmanager/</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 px-5 py-3 rounded-2xl bg-slate-900 border border-indigo-500/40 shadow-2xl flex items-center space-x-3 text-sm">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+    <span id="toast-msg" class="text-slate-200 font-medium">Notification message</span>
+  </div>
+
+  <!-- ============================================================================== -->
+  <!-- 9. JAVASCRIPT MICROSERVICES CLIENT CONTROLLER -->
+  <!-- ============================================================================== -->
+  <script>
+    // State
+    let products = [];
+    let currentCategory = 'All';
+    let cart = { items: [], subtotal: 0, tax: 0, shipping: 0, total: 0 };
+    const USER_ID = 'usr-devops-02';
+
+    // 1. Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchProducts();
+      fetchCart();
+      pollMeshHealth();
+      setInterval(pollMeshHealth, 5000); // Poll latency every 5s
+
+      // Search input listener
+      document.getElementById('search-input').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        renderProducts(products.filter(p => 
+          p.title.toLowerCase().includes(query) || p.description.toLowerCase().includes(query)
+        ));
+      });
+    });
+
+    // 2. Fetch Products from Product Service via Gateway
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/api/products');
+        const data = await res.json();
+        products = data.products || [];
+        renderProducts(products);
+      } catch (err) {
+        showToast('Error loading products from Catalog service', 'error');
+      }
+    }
+
+    // 3. Render Product Cards
+    function renderProducts(items) {
+      const grid = document.getElementById('product-grid');
+      document.getElementById('item-count').innerText = items.length;
+
+      if (!items.length) {
+        grid.innerHTML = `<div class="col-span-full py-16 text-center text-slate-500 font-mono">No products found matching criteria.</div>`;
+        return;
+      }
+
+      grid.innerHTML = items.map(p => `
+        <div class="glass-card rounded-2xl overflow-hidden flex flex-col justify-between group hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300">
+          <div class="relative overflow-hidden aspect-[4/3] bg-slate-900">
+            <img src="${p.imageUrl}" alt="${p.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
+            <span class="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-slate-950/80 backdrop-blur-md text-[11px] font-mono font-bold text-indigo-300 border border-indigo-500/30">
+              ${p.category}
+            </span>
+            ${p.badge ? `<span class="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-amber-500/90 text-slate-950 text-[10px] font-bold uppercase tracking-wider">${p.badge}</span>` : ''}
+          </div>
+
+          <div class="p-5 flex-1 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center space-x-1 text-amber-400 text-xs mb-1.5">
+                <i class="fa-solid fa-star"></i>
+                <span class="font-bold text-slate-200 ml-1">${p.rating}</span>
+                <span class="text-slate-500 text-[11px]">(${p.reviewsCount})</span>
+              </div>
+              <h3 class="font-bold text-base text-white group-hover:text-indigo-300 transition leading-snug mb-2">${p.title}</h3>
+              <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-4">${p.description}</p>
+            </div>
+
+            <div class="pt-4 border-t border-slate-800 flex items-center justify-between">
+              <div>
+                <span class="text-xs text-slate-500 line-through mr-1">$${p.originalPrice}</span>
+                <span class="text-xl font-extrabold text-white font-mono">$${p.price}</span>
+              </div>
+              <button onclick="addToCart('${p.id}')" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center shadow-lg shadow-indigo-600/30">
+                <i class="fa-solid fa-plus mr-1.5"></i> Add
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 4. Category Filter
+    function setCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.cat-btn').forEach(b => {
+        if (b.dataset.cat === cat) {
+          b.className = 'cat-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-indigo-600 text-white shadow-lg shadow-indigo-600/20';
+        } else {
+          b.className = 'cat-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800';
+        }
+      });
+      if (cat === 'All') {
+        renderProducts(products);
+      } else {
+        renderProducts(products.filter(p => p.category.toLowerCase() === cat.toLowerCase()));
+      }
+    }
+
+    // 5. Cart Actions (Cart Service via Gateway)
+    async function fetchCart() {
+      try {
+        const res = await fetch(`/api/cart/${USER_ID}`);
+        const data = await res.json();
+        if (data.cart) {
+          cart = data.cart;
+          updateCartUI();
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    async function addToCart(productId) {
+      const prod = products.find(p => p.id === productId);
+      if (!prod) return;
+
+      try {
+        const res = await fetch(`/api/cart/${USER_ID}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: prod.id,
+            title: prod.title,
+            price: prod.price,
+            imageUrl: prod.imageUrl,
+            quantity: 1
+          })
+        });
+        const data = await res.json();
+        if (data.cart) {
+          cart = data.cart;
+          updateCartUI();
+          showToast(`Added "${prod.title}" to cart!`);
+        }
+      } catch (err) {
+        showToast('Cart service unreachable', 'error');
+      }
+    }
+
+    async function updateQuantity(productId, quantity) {
+      try {
+        const res = await fetch(`/api/cart/${USER_ID}/items/${productId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity })
+        });
+        const data = await res.json();
+        if (data.cart) {
+          cart = data.cart;
+          updateCartUI();
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    function updateCartUI() {
+      const totalCount = cart.items ? cart.items.reduce((acc, it) => acc + it.quantity, 0) : 0;
+      document.getElementById('cart-badge').innerText = totalCount;
+      document.getElementById('cart-items-counter').innerText = totalCount;
+
+      const subtotal = cart.subtotal || 0;
+      document.getElementById('cart-subtotal').innerText = `$${subtotal.toFixed(2)}`;
+      document.getElementById('cart-tax').innerText = `$${(cart.tax || 0).toFixed(2)}`;
+      document.getElementById('cart-shipping').innerText = cart.shipping === 0 ? 'FREE' : `$${(cart.shipping || 0).toFixed(2)}`;
+      document.getElementById('cart-total').innerText = `$${(cart.total || 0).toFixed(2)}`;
+      document.getElementById('chk-total').innerText = `$${(cart.total || 0).toFixed(2)}`;
+
+      const progress = Math.min(100, (subtotal / 100) * 100);
+      document.getElementById('shipping-progress').style.width = `${progress}%`;
+      document.getElementById('shipping-prompt').innerText = subtotal >= 100 
+        ? '🎉 You unlocked FREE Express Shipping!' 
+        : `Add $${(100 - subtotal).toFixed(2)} more for FREE Shipping`;
+
+      const checkoutBtn = document.getElementById('checkout-btn');
+      checkoutBtn.disabled = !cart.items || cart.items.length === 0;
+
+      const container = document.getElementById('cart-items-container');
+      if (!cart.items || !cart.items.length) {
+        container.innerHTML = `
+          <div class="text-center py-16 text-slate-500">
+            <i class="fa-solid fa-basket-shopping text-4xl mb-3"></i>
+            <p class="text-sm">Your cart is currently empty.</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = cart.items.map(it => `
+        <div class="p-3 bg-slate-950/70 rounded-2xl border border-slate-800 flex items-center justify-between">
+          <img src="${it.imageUrl || 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=100'}" class="w-14 h-14 rounded-xl object-cover mr-3 bg-slate-900">
+          <div class="flex-1 mr-2">
+            <h4 class="text-xs font-bold text-white line-clamp-1">${it.title}</h4>
+            <span class="text-xs font-mono text-indigo-400 font-semibold">$${it.price}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg">
+              <button onclick="updateQuantity('${it.id}', ${it.quantity - 1})" class="px-2 py-1 text-xs text-slate-400 hover:text-white">-</button>
+              <span class="px-2 text-xs font-mono font-bold text-white">${it.quantity}</span>
+              <button onclick="updateQuantity('${it.id}', ${it.quantity + 1})" class="px-2 py-1 text-xs text-slate-400 hover:text-white">+</button>
+            </div>
+            <button onclick="updateQuantity('${it.id}', 0)" class="text-rose-400 hover:text-rose-300 text-xs px-1.5"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 6. Mesh Topology & Latency Polling
+    async function pollMeshHealth() {
+      try {
+        const res = await fetch('/api/mesh/health');
+        const data = await res.json();
+
+        if (data.services) {
+          data.services.forEach(s => {
+            const el = document.getElementById(`lat-${s.id}`);
+            if (el) {
+              el.innerText = `${s.latencyMs}ms`;
+              el.className = s.healthy ? 'ml-1 text-emerald-300 font-bold' : 'ml-1 text-rose-400 font-bold';
+            }
+          });
+          document.getElementById('avg-latency').innerText = `< ${data.averageLatencyMs || 3} ms`;
+          const overall = document.getElementById('mesh-overall-status');
+          if (data.meshStatus === 'HEALTHY') {
+            overall.innerText = '100% HEALTHY';
+            overall.className = 'px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+          } else {
+            overall.innerText = 'DEGRADED';
+            overall.className = 'px-2 py-0.5 rounded text-xs font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30';
+          }
+        }
+
+        // Poll Circuit Breaker & RabbitMQ Telemetry
+        const evRes = await fetch('/api/events/status');
+        const evData = await evRes.json();
+        if (evData && evData.circuitBreaker) {
+          const cb = document.getElementById('circuit-badge');
+          if (cb) {
+            const st = evData.circuitBreaker.state;
+            if (st === 'CLOSED') {
+              cb.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>CIRCUIT: CLOSED`;
+              cb.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center';
+            } else if (st === 'OPEN') {
+              cb.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400 mr-1 animate-ping"></span>CIRCUIT: OPEN (${evData.circuitBreaker.failureCount}/3)`;
+              cb.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center';
+            } else {
+              cb.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 mr-1 animate-pulse"></span>CIRCUIT: HALF-OPEN`;
+              cb.className = 'px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center';
+            }
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    // 7. Multi-Hop Checkout Orchestration
+    async function handleCheckout(e) {
+      e.preventDefault();
+      const progressOverlay = document.getElementById('checkout-progress');
+      progressOverlay.classList.remove('hidden');
+
+      const name = document.getElementById('chk-name').value;
+      const email = document.getElementById('chk-email').value;
+      const address = document.getElementById('chk-address').value;
+
+      try {
+        // Step 1: Validate stock
+        await new Promise(r => setTimeout(r, 600));
+        document.getElementById('step-1').innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-2"></i> Inventory Reserved (inventory-service)`;
+        document.getElementById('step-2').className = 'flex items-center text-indigo-400 font-bold';
+        document.getElementById('step-2').innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-2"></i> Authorizing Payment via Payment Gateway...`;
+
+        // Step 2: Payment authorization
+        await new Promise(r => setTimeout(r, 800));
+        const payRes = await fetch('/api/payments/process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: cart.total, orderId: 'PENDING' })
+        });
+        const payData = await payRes.json();
+
+        if (!payRes.ok || !payData.success) {
+          throw new Error(payData.error || 'Payment gateway declined transaction');
+        }
+
+        document.getElementById('step-2').innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-2"></i> Payment Authorized: ${payData.transaction.transactionId}`;
+        document.getElementById('step-3').className = 'flex items-center text-indigo-400 font-bold';
+        document.getElementById('step-3').innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-2"></i> Dispatching Notification via Email Service...`;
+
+        // Step 3: Create Order in Order Service
+        const orderRes = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: USER_ID,
+            customerName: name,
+            email,
+            shippingAddress: address,
+            items: cart.items
+          })
+        });
+        const orderData = await orderRes.json();
+
+        // Step 4: Dispatch Notification
+        await fetch('/api/notifications/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipient: email,
+            orderId: orderData.order.id,
+            subject: `Order #${orderData.order.id} Confirmed`
+          })
+        });
+
+        document.getElementById('step-3').innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-2"></i> Confirmation Dispatched to ${email}`;
+
+        // Clear cart
+        await fetch(`/api/cart/${USER_ID}`, { method: 'DELETE' });
+        cart.items = [];
+        updateCartUI();
+
+        await new Promise(r => setTimeout(r, 800));
+        progressOverlay.classList.add('hidden');
+        closeCheckoutModal();
+        toggleCartDrawer(false);
+        showToast(`🎉 Order #${orderData.order.id} placed successfully!`);
+        toggleOrdersModal();
+      } catch (err) {
+        progressOverlay.classList.add('hidden');
+        showToast(`Checkout Failed: ${err.message}`, 'error');
+      }
+    }
+
+    // 8. Order History Modal
+    async function toggleOrdersModal() {
+      const modal = document.getElementById('orders-modal');
+      const isOpen = !modal.classList.contains('opacity-0');
+
+      if (isOpen) {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+      } else {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        loadOrders();
+      }
+    }
+
+    async function loadOrders() {
+      const container = document.getElementById('orders-list-container');
+      try {
+        const res = await fetch('/api/orders');
+        const data = await res.json();
+        const orders = data.orders || [];
+
+        if (!orders.length) {
+          container.innerHTML = `<div class="text-center py-12 text-slate-500 font-mono">No orders found in database.</div>`;
+          return;
+        }
+
+        container.innerHTML = orders.map(o => `
+          <div class="p-5 bg-slate-950 rounded-2xl border border-slate-800 space-y-3 font-mono text-xs">
+            <div class="flex justify-between items-center border-b border-slate-800/80 pb-2.5">
+              <div>
+                <span class="font-bold text-white text-sm">${o.id}</span>
+                <span class="text-slate-500 ml-2">${new Date(o.createdAt).toLocaleDateString()}</span>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${o.status === 'Delivered' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400'}">
+                ${o.status}
+              </span>
+            </div>
+            <div class="text-slate-300">
+              <span class="text-slate-500">Customer:</span> ${o.customerName} (${o.email || 'customer@retailcorp.com'})
+            </div>
+            <div class="text-slate-300">
+              <span class="text-slate-500">Ship To:</span> ${o.shippingAddress}
+            </div>
+            <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 text-sm">
+              <span class="text-slate-400">Total Charged:</span>
+              <span class="font-bold text-emerald-400">$${o.total}</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = `<div class="text-center py-12 text-rose-400 font-mono">Failed to query order-service.</div>`;
+      }
+    }
+
+    // 9. UI Helpers
+    function toggleCartDrawer(forceState) {
+      const drawer = document.getElementById('cart-drawer');
+      const backdrop = document.getElementById('cart-drawer-backdrop');
+      const isOpen = !drawer.classList.contains('translate-x-full');
+      const shouldOpen = forceState !== undefined ? forceState : !isOpen;
+
+      if (shouldOpen) {
+        drawer.classList.remove('translate-x-full');
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+      } else {
+        drawer.classList.add('translate-x-full');
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+      }
+    }
+
+    function openCheckoutModal() {
+      const modal = document.getElementById('checkout-modal');
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    function closeCheckoutModal() {
+      const modal = document.getElementById('checkout-modal');
+      modal.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    function toggleAdminPanel() {
+      const panel = document.getElementById('admin-panel');
+      const isOpen = !panel.classList.contains('opacity-0');
+      if (isOpen) {
+        panel.classList.add('opacity-0', 'pointer-events-none');
+      } else {
+        panel.classList.remove('opacity-0', 'pointer-events-none');
+      }
+    }
+
+    async function togglePaymentChaos() {
+      try {
+        const res = await fetch('/api/payments/chaos', { method: 'POST' });
+        const data = await res.json();
+        const btn = document.getElementById('chaos-btn');
+        if (data.chaosMode) {
+          btn.innerText = 'ON (FAILING)';
+          btn.className = 'px-4 py-2 rounded-xl text-xs font-mono font-bold transition bg-rose-600 text-white';
+          showToast('Chaos mode ACTIVATED on Payment Service!', 'error');
+        } else {
+          btn.innerText = 'OFF';
+          btn.className = 'px-4 py-2 rounded-xl text-xs font-mono font-bold transition bg-slate-800 text-slate-300';
+          showToast('Chaos mode DEACTIVATED. Payment Service normal.');
+        }
+      } catch (e) {
+        showToast('Failed to toggle chaos mode', 'error');
+      }
+    }
+
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      document.getElementById('toast-msg').innerText = msg;
+
+      if (type === 'error') {
+        icon.className = 'fa-solid fa-circle-exclamation text-rose-400 text-lg';
+        toast.className = 'fixed bottom-6 right-6 z-50 transform translate-y-0 opacity-100 transition-all duration-300 px-5 py-3 rounded-2xl bg-slate-900 border border-rose-500/50 shadow-2xl flex items-center space-x-3 text-sm';
+      } else {
+        icon.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+        toast.className = 'fixed bottom-6 right-6 z-50 transform translate-y-0 opacity-100 transition-all duration-300 px-5 py-3 rounded-2xl bg-slate-900 border border-emerald-500/50 shadow-2xl flex items-center space-x-3 text-sm';
+      }
+
+      setTimeout(() => {
+        toast.className = 'fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 px-5 py-3 rounded-2xl bg-slate-900 border border-indigo-500/40 shadow-2xl flex items-center space-x-3 text-sm';
+      }, 4000);
+    }
+  </script>
+</body>
+</html>

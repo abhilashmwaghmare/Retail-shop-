@@ -1,0 +1,17 @@
+apiVersion: v2
+name: retailcorp-mesh
+description: Enterprise Cloud-Native 7-Microservices E-Commerce Platform with RabbitMQ, Redis, PostgreSQL & Observability
+type: application
+version: 2.0.0
+appVersion: "2.0.0"
+keywords:
+  - ecommerce
+  - microservices
+  - devops
+  - sre
+  - prometheus
+  - rabbitmq
+  - kubernetes
+maintainers:
+  - name: RetailCorp Cloud Engineering Team
+    email: devops@retailcorp.com

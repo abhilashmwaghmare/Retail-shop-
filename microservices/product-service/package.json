@@ -1,0 +1,13 @@
+{
+  "name": "retailcorp-product-service",
+  "version": "1.0.0",
+  "description": "RetailCorp Microservices - Product Catalog & Inventory View",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  }
+}

@@ -1,0 +1,107 @@
+name: Enterprise DevSecOps CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ==============================================================================
+  # 1. STATIC APPLICATION SECURITY TESTING (SAST) & CODE QUALITY
+  # ==============================================================================
+  lint-and-audit:
+    name: Lint, Unit Test & SAST Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Microservices Configuration Validation
+        run: |
+          echo "Validating Microservices Architecture & Node Syntax..."
+          node -c microservices/api-gateway/src/server.js
+          node -c microservices/auth-service/src/server.js
+          node -c microservices/product-service/src/server.js
+          node -c microservices/cart-service/src/server.js
+          node -c microservices/order-service/src/server.js
+          node -c microservices/payment-service/src/server.js
+          node -c microservices/notification-service/src/server.js
+          echo "All 7 Microservices passed syntax validation."
+
+      - name: Run Trivy Filesystem Vulnerability Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '0'
+
+  # ==============================================================================
+  # 2. INFRASTRUCTURE AS CODE (IaC) SECURITY POSTURE (Checkov)
+  # ==============================================================================
+  iac-security-scan:
+    name: IaC Security Scan (Checkov - Terraform & Helm)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov IaC Security Analysis
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: '.'
+          framework: 'terraform,helm,dockerfile'
+          soft_fail: true
+          output_format: 'cli'
+
+  # ==============================================================================
+  # 3. KUBERNETES & HELM CHART LINTING
+  # ==============================================================================
+  helm-lint:
+    name: Helm Chart Validation & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.14.0'
+
+      - name: Lint RetailCorp Production Helm Chart
+        run: |
+          helm lint helm/retailcorp
+
+  # ==============================================================================
+  # 4. CONTAINER IMAGE BUILD & CVE SCANNING
+  # ==============================================================================
+  container-build-scan:
+    name: Multi-Service Container Build & CVE Audit
+    needs: [lint-and-audit, iac-security-scan, helm-lint]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API Gateway Image
+        run: |
+          docker build -t retailcorp/api-gateway:${{ github.sha }} -f microservices/api-gateway/Dockerfile microservices/api-gateway
+
+      - name: Scan API Gateway Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'retailcorp/api-gateway:${{ github.sha }}'
+          format: 'table'
+          severity: 'CRITICAL'
+          exit-code: '0'
