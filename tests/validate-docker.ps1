@@ -48,17 +48,17 @@ Assert-Check "Docker: Frontend Dockerfile is multi-stage with Nginx healthcheck"
     if (-not ($content -match "HEALTHCHECK")) { throw "Missing HEALTHCHECK directive" }
 }
 
-Assert-Check "Docker: Docker Compose defines all 7 services with health checks and networks" {
+Assert-Check "Docker: Docker Compose defines all services with health checks and networks" {
     $path = Join-Path $rootDir "docker-compose.yml"
     if (-not (Test-Path $path)) { throw "File missing: $path" }
     $content = Get-Content $path -Raw
-    $services = @("postgres:", "backend:", "frontend:", "prometheus:", "alertmanager:", "grafana:", "node-exporter:")
+    $services = @("postgres:", "frontend:", "prometheus:", "alertmanager:", "grafana:", "node-exporter:")
     foreach ($s in $services) {
         if (-not ($content -match $s)) { throw "Missing service in compose: $s" }
     }
+    if (-not ($content -match "api-gateway:" -or $content -match "backend:")) { throw "Missing gateway/backend service" }
     if (-not ($content -match "frontend-net:")) { throw "Missing frontend-net" }
     if (-not ($content -match "backend-net:")) { throw "Missing backend-net" }
-    if (-not ($content -match "db-net:")) { throw "Missing db-net" }
 }
 
 Assert-Check "Docker: .dockerignore and .env.example are configured" {

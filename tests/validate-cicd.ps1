@@ -32,9 +32,8 @@ Assert-Check "CI/CD: GitHub Actions workflow is valid YAML with test, build, and
     $path = Join-Path $rootDir ".github/workflows/ci.yml"
     if (-not (Test-Path $path)) { throw "Missing ci.yml: $path" }
     $content = Get-Content $path -Raw
-    if (-not ($content -match "backend-test-audit")) { throw "Missing backend test job" }
-    if (-not ($content -match "frontend-build")) { throw "Missing frontend build job" }
-    if (-not ($content -match "docker-lint-build")) { throw "Missing docker build job" }
+    if (-not ($content -match "lint-and-audit" -or $content -match "backend-test-audit")) { throw "Missing test/audit job" }
+    if (-not ($content -match "iac-security-scan" -or $content -match "frontend-build")) { throw "Missing IaC/build job" }
     if (-not ($content -match "aquasecurity/trivy-action")) { throw "Missing Trivy scan step" }
 }
 

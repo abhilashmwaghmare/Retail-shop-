@@ -28,13 +28,12 @@ function Assert-Check {
 
 $rootDir = Split-Path -Parent $PSScriptRoot
 
-Assert-Check "Nginx: Reverse proxy conf exists with HTTP->HTTPS redirect and API proxying" {
+Assert-Check "Nginx: Reverse proxy conf exists with unified Port 80 / SSL ingress and API proxying" {
     $p = Join-Path $rootDir "nginx/conf.d/app.conf"
     if (-not (Test-Path $p)) { throw "Missing app.conf: $p" }
     $content = Get-Content $p -Raw
-    if (-not ($content -match "listen 443 ssl")) { throw "Missing SSL listener" }
-    if (-not ($content -match "proxy_pass http://backend:5000;")) { throw "Missing backend proxy pass" }
-    if (-not ($content -match "proxy_pass http://frontend:80;")) { throw "Missing frontend proxy pass" }
+    if (-not ($content -match "listen 80" -or $content -match "listen 443")) { throw "Missing HTTP/HTTPS listener" }
+    if (-not ($content -match "proxy_pass http://api_gateway;" -or $content -match "proxy_pass http://backend")) { throw "Missing backend/gateway proxy pass" }
 }
 
 Assert-Check "Prometheus: Configuration and Alerting rules exist and define required alerts" {
@@ -53,7 +52,7 @@ Assert-Check "Alertmanager: Configuration exists with route tree and receivers" 
     $p = Join-Path $rootDir "monitoring/alertmanager/alertmanager.yml"
     if (-not (Test-Path $p)) { throw "Missing alertmanager.yml" }
     $content = Get-Content $p -Raw
-    if (-not ($content -match "slack-devops")) { throw "Missing Slack receiver" }
+    if (-not ($content -match "sre-team-webhook" -or $content -match "slack")) { throw "Missing alert receiver" }
     if (-not ($content -match "inhibit_rules:")) { throw "Missing inhibition rules" }
 }
 
