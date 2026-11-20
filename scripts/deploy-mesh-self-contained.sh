@@ -1,7 +1,7 @@
 #!/bin/bash
 # ==============================================================================
 # RetailCorp Enterprise 7-Microservices Production Deployer
-# Target: AWS EC2 (c7i-flex.large) - 52.63.189.76
+# Target: AWS EC2 (c7i-flex.large) - 3.25.108.223
 # ==============================================================================
 set -e
 
@@ -699,10 +699,10 @@ echo ""
 echo "=================================================================="
 echo "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!"
 echo "=================================================================="
-echo "🌐 Storefront UI:            http://52.63.189.76/"
-echo "⚡ Mesh Health Probe:        http://52.63.189.76/api/mesh/health"
-echo "📊 Grafana SRE Dashboard:    http://52.63.189.76/grafana/ (admin / RetailCorpAdmin2026!)"
-echo "🔥 Prometheus Server:        http://52.63.189.76/prometheus/"
-echo "🔔 Alertmanager:             http://52.63.189.76/alertmanager/"
-echo "📈 Raw System Metrics:       http://52.63.189.76/metrics"
+echo "🌐 Storefront UI:            http://3.25.108.223/"
+echo "⚡ Mesh Health Probe:        http://3.25.108.223/api/mesh/health"
+echo "📊 Grafana SRE Dashboard:    http://3.25.108.223/grafana/ (admin / RetailCorpAdmin2026!)"
+echo "🔥 Prometheus Server:        http://3.25.108.223/prometheus/"
+echo "🔔 Alertmanager:             http://3.25.108.223/alertmanager/"
+echo "📈 Raw System Metrics:       http://3.25.108.223/metrics"
 echo "=================================================================="

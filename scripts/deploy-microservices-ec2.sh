@@ -524,7 +524,7 @@ cat << 'HTMLEOF' > nginx/index.html
 
       <div class="flex items-center space-x-3">
         <a href="/metrics" target="_blank" class="text-indigo-400 hover:text-indigo-300 flex items-center font-medium"><i class="fa-solid fa-chart-line mr-1"></i> METRICS</a>
-        <a href="http://52.63.189.76:3000" target="_blank" class="text-amber-400 hover:text-amber-300 flex items-center font-medium"><i class="fa-solid fa-gauge-high mr-1"></i> GRAFANA</a>
+        <a href="http://3.25.108.223:3000" target="_blank" class="text-amber-400 hover:text-amber-300 flex items-center font-medium"><i class="fa-solid fa-gauge-high mr-1"></i> GRAFANA</a>
       </div>
     </div>
   </div>
@@ -566,7 +566,7 @@ cat << 'HTMLEOF' > nginx/index.html
       </div>
       <div class="flex gap-2">
         <a href="/api/mesh/health" target="_blank" class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-cyan-400 hover:bg-slate-800 flex items-center"><i class="fa-solid fa-network-wired mr-2"></i> /api/mesh/health</a>
-        <a href="http://52.63.189.76:3000" target="_blank" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-xs font-bold text-white flex items-center"><i class="fa-solid fa-chart-pie mr-2"></i> Grafana SRE</a>
+        <a href="http://3.25.108.223:3000" target="_blank" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-xs font-bold text-white flex items-center"><i class="fa-solid fa-chart-pie mr-2"></i> Grafana SRE</a>
       </div>
     </div>
   </section>
@@ -997,9 +997,9 @@ curl -s http://localhost:80/api/mesh/health || true
 echo ""
 echo "=================================================================="
 echo "🎉 ENTERPRISE 7-MICROSERVICES DEPLOYMENT COMPLETED ON AWS EC2!"
-echo "Storefront URL:            http://52.63.189.76"
-echo "Mesh Health Status:        http://52.63.189.76/api/mesh/health"
-echo "Gateway Health Probe:      http://52.63.189.76/healthz"
-echo "Grafana SRE Dashboard:     http://52.63.189.76:3000 (admin / RetailCorpAdmin2026!)"
-echo "Prometheus Metrics Server: http://52.63.189.76:9090"
+echo "Storefront URL:            http://3.25.108.223"
+echo "Mesh Health Status:        http://3.25.108.223/api/mesh/health"
+echo "Gateway Health Probe:      http://3.25.108.223/healthz"
+echo "Grafana SRE Dashboard:     http://3.25.108.223:3000 (admin / RetailCorpAdmin2026!)"
+echo "Prometheus Metrics Server: http://3.25.108.223:9090"
 echo "=================================================================="

@@ -2,14 +2,13 @@
 # ==============================================================================
 # RetailCorp E-Commerce - AWS EC2 Bootstrap & Automated Deployment
 # ==============================================================================
-# Target Host: AWS EC2 (Ubuntu 22.04 / 24.04 or Amazon Linux 2023)
-# Public IP: 52.63.189.76
-# Instance ID: i-0d8109a3488ccdd8d
+# Target Host: AWS EC2 (Ubuntu 22.04 / 24.04 / 26.04 or Amazon Linux 2023)
+# Public IP: 3.25.108.223
 # ==============================================================================
 
 set -e
 
-PUBLIC_IP="52.63.189.76"
+PUBLIC_IP="3.25.108.223"
 
 echo "=================================================================="
 echo "🚀 INITIATING RETAILCORP E-COMMERCE DEPLOYMENT ON AWS EC2"
